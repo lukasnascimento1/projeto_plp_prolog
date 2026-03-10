@@ -1,4 +1,6 @@
 :- discontiguous process/3.
+:- use_module(board).
+:- use_module(generator).
 
 print_board(Board) :-
     nl,
@@ -25,11 +27,29 @@ print_cells([Cell|Rest]) :-
     write(' '),
     print_cells(Rest).
 
+choose_difficulty(Difficulty) :-
+    writeln("Escolha a dificuldade:"),
+    writeln("  f -> facil"),
+    writeln("  d -> dificil"),
+    read_line_to_string(user_input, Input),
+    string_lower(Input, L),
+    parse_difficulty(L, Difficulty).
 
-:- use_module(board).
+parse_difficulty("f", easy).
+parse_difficulty("facil", easy).
+parse_difficulty("d", hard).
+parse_difficulty("dificil", hard).
+
+generate_board(easy, Board) :-
+    generator:generate_easy(Board).
+
+generate_board(hard, Board) :-
+    generator:generate_hard(Board).
+
 
 start :-
-    board_empty(Board),
+    choose_difficulty(Difficulty),
+    generate_board(Difficulty, Board),
     game_loop(Board).
 
 game_loop(Board) :-
