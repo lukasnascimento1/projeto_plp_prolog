@@ -10,6 +10,7 @@
     remove_numbers/3
 ]).
 
+:- use_module(board).
 :- use_module(library(random), [random/3]).
 
 get_column(_, [], []).

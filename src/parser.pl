@@ -24,6 +24,14 @@ Interpreta comandos do usuário no formato:
    M       -> mostrar menu de comandos
 Converte a string em ação e coordenadas utilizáveis pelo sistema.
 */
+
+parse_command(String, delete, Row, Col, 0) :-
+    split_string(String, "-", "", [Act,Coord]),
+    string_upper(Act, ActU),
+    ActU = "D",
+    string_upper(Coord, CoordU),
+    coord_to_index(CoordU, Row, Col).
+
 parse_command(String, Action, Row, Col, Value) :-
     split_string(String, "-", "", [Act,Coord,ValStr]),
     string_upper(Act, ActU),
