@@ -70,27 +70,21 @@ tutorial_lines([
 menu_lines([
     "[A] Sobre o Sudoku",
     "[T] Tutorial",
+    "[R] Reiniciar",
     "[Q] Sair",
     "Qualquer outra tecla inicia o jogo"]).
 
-color_menu_line(Line, Colored) :-
-    ( sub_string(Line, 0, 4, _, Prefix),
-      sub_string(Line, 4, _, 0, Rest)
+color_command_line(Line, Colored) :-
+    ( sub_string(Line, Before, _, _, "]")
     ->
-        color_text(Prefix, yellow, ColoredPrefix),
-        color_text(Rest, green, ColoredRest),
-        format(string(Colored), "~w~w", [ColoredPrefix, ColoredRest])
-    ;
-        color_text(Line, green, Colored)
-    ).
+        End is Before + 1,
+        sub_string(Line, 0, End, _, Prefix),
+        sub_string(Line, End, _, 0, Rest),
 
-color_tutorial_line(Line, Colored) :-
-    ( sub_string(Line, 0, 5, _, Prefix),
-      sub_string(Line, 5, _, 0, Rest)
-    ->
-        color_text(Prefix, yellow, ColoredPrefix),
-        color_text(Rest, green, ColoredRest),
-        format(string(Colored), "~w~w", [ColoredPrefix, ColoredRest])
+        color_text(Prefix, yellow, CP),
+        color_text(Rest, green, CR),
+
+        format(string(Colored), "~w~w", [CP, CR])
     ;
         color_text(Line, green, Colored)
     ).
@@ -100,7 +94,11 @@ tutorial :-
     maplist(print_tutorial_line, Lines).
 
 print_tutorial_line(Line) :-
-    color_tutorial_line(Line, Colored),
+    color_command_line(Line, Colored),
+    writeln(Colored).
+
+print_menu_line(Line) :-
+    color_command_line(Line, Colored),
     writeln(Colored).
 
 
