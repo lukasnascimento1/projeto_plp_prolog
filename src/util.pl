@@ -75,7 +75,7 @@ menu_lines([
     "Qualquer outra tecla inicia o jogo"]).
 
 color_command_line(Line, Colored) :-
-    ( sub_string(Line, Before, _, After, "]")
+    ( sub_string(Line, Before, _, _, "]")
     ->
         End is Before + 1,
         sub_string(Line, 0, End, _, Prefix),
