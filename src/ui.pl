@@ -134,7 +134,7 @@ parse_difficulty("dificil", hard).
 game_loop(Board, Fixed) :-
     clear_screen,
     print_board(Board, Fixed),
-    print_color("Digite um comando (I-B3-2, D-B3, V, M, Q):", green),
+    print_color("Digite um comando (I-B3-2, D-B3, V, M, R, Q):", green),
     read_command(Str),
     string_upper(Str, StrU),
 
@@ -150,6 +150,9 @@ game_loop(Board, Fixed) :-
         -> check_board(Board),
            wait_enter,
            game_loop(Board, Fixed)
+    
+    ; StrU = "R"
+    -> start
 
     ; parser:parse_command(StrU, Action, Row, Col, Value)
         -> execute(Action, Row, Col, Value, Board, Fixed, NewBoard),
