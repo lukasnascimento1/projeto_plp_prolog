@@ -18,7 +18,8 @@ start :-
     intro,
     menu_loop(Difficulty),
     generate_board(Difficulty, Board),
-    game_loop(Board).
+    build_fixed(Board, Fixed),
+    game_loop(Board, Fixed).
 
 
 /* =========================
@@ -30,6 +31,20 @@ generate_board(easy, Board) :-
 
 generate_board(hard, Board) :-
     generator:generate_hard(Board).
+
+
+/* =========================
+   Construção da máscara fixa
+   ========================= */
+
+build_fixed(Board, Fixed) :-
+    maplist(build_fixed_row, Board, Fixed).
+
+build_fixed_row(Row, FixedRow) :-
+    maplist(cell_fixed, Row, FixedRow).
+
+cell_fixed(0, false).
+cell_fixed(_, true).
 
 
 /* =========================
@@ -67,8 +82,7 @@ actions(Action) :-
    Processamento do menu
    ========================= */
 
-process_menu(none, none) :-
-    !.
+process_menu(none, none) :- !.
 
 process_menu('A', none) :-
     clear_screen,
@@ -107,21 +121,20 @@ choose_difficulty(Difficulty) :-
     string_lower(Input, L),
     parse_difficulty(L, Difficulty).
 
-
+/* Mapeamento da dificuldade escolhida pelo usuário para gerar o tabuleiro correspodente */
 parse_difficulty("f", easy).
 parse_difficulty("facil", easy).
 parse_difficulty("d", hard).
 parse_difficulty("dificil", hard).
 
-
 /* =========================
    Loop principal do jogo
    ========================= */
 
-game_loop(Board) :-
+game_loop(Board, Fixed) :-
     clear_screen,
-    print_board(Board),
-    writeln("Digite um comando (I-B3-2, D-B3, M, Q):"),
+    print_board(Board, Fixed),
+    print_color("Digite um comando (I-B3-2, D-B3, V, M, Q):", green),
     read_command(Str),
     string_upper(Str, StrU),
 
@@ -131,16 +144,51 @@ game_loop(Board) :-
     ; StrU = "M"
         -> tutorial,
            wait_enter,
-           game_loop(Board)
+           game_loop(Board, Fixed)
+
+    ; StrU = "V"
+        -> check_board(Board),
+           wait_enter,
+           game_loop(Board, Fixed)
 
     ; parser:parse_command(StrU, Action, Row, Col, Value)
-        -> parser:execute(Action, Row, Col, Value, Board, NewBoard),
-           game_loop(NewBoard)
+        -> execute(Action, Row, Col, Value, Board, Fixed, NewBoard),
+           game_loop(NewBoard, Fixed)
 
-    ; writeln("Comando invalido"),
+    ; print_color("Comando invalido", red),
       wait_enter,
-      game_loop(Board)
+      game_loop(Board, Fixed)
     ).
+
+check_board(Board) :-
+    ( sudoku_correct(Board)
+        -> print_color("Parabéns! O Sudoku está correto!", green)
+        ;  print_color("O tabuleiro ainda possui erros.", red)
+    ).
+
+/* =========================
+   Execução protegida
+   ========================= */
+
+execute(insert, Row, Col, _, Board, Fixed, Board) :-
+    nth0(Row, Fixed, FR),
+    nth0(Col, FR, true),
+    print_color("Essa célula pertence ao puzzle e não pode ser alterada.", red),
+    !.
+
+execute(insert, Row, Col, Value, Board, _, NewBoard) :-
+    board:insert_on_board(Value, Row, Col, Board, NewBoard, Result),
+    writeln(Result).
+
+execute(delete, Row, Col, _, Board, Fixed, Board) :-
+    nth0(Row, Fixed, FR),
+    nth0(Col, FR, true),
+    print_color("Essa célula pertence ao puzzle e não pode ser removida.", red),
+    !.
+
+execute(delete, Row, Col, _, Board, _, NewBoard) :-
+    board:delete_from_board(Row, Col, Board, NewBoard, Result),
+    writeln(Result).
 
 
 /* =========================
@@ -164,79 +212,72 @@ read_command(Command) :-
 /* =========================
    Impressão do tabuleiro
    ========================= */
-/* =========================
-   Impressão do tabuleiro
-   ========================= */
 
-print_board(Board) :-
+print_board(Board, Fixed) :-
     nl,
     print_column_header,
-    print_rows(Board, 1),
+    print_rows(Board, Fixed, 1),
     nl.
 
 
-/* Cabeçalho */
-
+/* coordenadas */
 print_column_header :-
-    util:color_text("    A B C   D E F   G H I", cyan, Header),
-    writeln(Header).
+    util:color_text("    A B C   D E F   G H I", magenta, H),
+    writeln(H).
 
 
-/* Impressão das linhas */
+print_rows([], [], _).
 
-print_rows([], _).
-
-print_rows([Row|Rest], Index) :-
-    ( Index =:= 4 ; Index =:= 7 ),
+print_rows([Row|Rest], [FRow|FRest], I) :-
+    (I =:= 4 ; I =:= 7),
     print_separator,
-    print_row(Row, Index),
-    Next is Index + 1,
-    print_rows(Rest, Next).
+    print_row(Row, FRow, I),
+    I2 is I + 1,
+    print_rows(Rest, FRest, I2).
 
-print_rows([Row|Rest], Index) :-
-    print_row(Row, Index),
-    Next is Index + 1,
-    print_rows(Rest, Next).
+print_rows([Row|Rest], [FRow|FRest], I) :-
+    print_row(Row, FRow, I),
+    I2 is I + 1,
+    print_rows(Rest, FRest, I2).
 
-
-/* Linha separadora dos blocos */
 
 print_separator :-
-    util:color_text("   ------+-------+------", weak_white, Sep),
-    writeln(Sep).
+    util:color_text("   ------+-------+------", weak_white, S),
+    writeln(S).
 
 
-/* Impressão de uma linha */
-
-print_row(Row, Index) :-
-    format("~w | ", [Index]),
-    print_cells(Row, 1),
+print_row(Row, FixedRow, Index) :-
+    number_string(Index, S),
+    util:color_text(S, magenta, IStr),
+    format("~w | ", [IStr]),
+    print_cells(Row, FixedRow, 1),
     nl.
 
 
-/* Impressão das células */
+print_cells([], [], _).
 
-print_cells([], _).
+print_cells([Cell|Rest], [Fix|FRest], Col) :-
+    print_cell(Cell, Fix),
 
-print_cells([Cell|Rest], Col) :-
-    print_cell(Cell),
-
-    ( Col =:= 3 ; Col =:= 6 ->
-        write("| ")
-    ;   write(" ")
+    ( (Col =:= 3 ; Col =:= 6)
+        -> write(" | ")
+        ;  write(" ")
     ),
 
     Next is Col + 1,
-    print_cells(Rest, Next).
+    print_cells(Rest, FRest, Next).
 
 
-/* Impressão de cada célula */
-
-print_cell(0) :-
+print_cell(0, _) :-
     util:color_text(".", weak_white, T),
     write(T).
 
-print_cell(Value) :-
+print_cell(Value, true) :-
     number_string(Value, S),
-    util:color_text(S, yellow, T),
+    util:color_text(S, weak_cyan, T),      % número original
+    write(T).
+
+print_cell(Value, false) :-
+    number_string(Value, S),
+    util:color_text(S, yellow, T),    % número inserido pelo jogador
     write(T).

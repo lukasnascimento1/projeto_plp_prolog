@@ -42,6 +42,9 @@ text_color(weak_blue,  "\033[2;34m").
 text_color(weak_cyan,  "\033[2;36m").
 text_color(weak_yellow,"\033[2;93m").
 
+text_color(magenta, "\033[95m").
+text_color(grid_green, "\033[92m").
+text_color(cyan_fixed, "\033[96m").
 text_color(cyan, "\033[36m").
 text_color(red,  "\033[31m").
 text_color(green,"\033[92m").
@@ -57,11 +60,11 @@ reset_color("\033[0m").
    ================================ */
 
 tutorial_lines([
-    "[I] Inserir um número",
-    "[D] Deletar um número",
-    "^^  Ao selecionar essas ações acima você precisará inserir as coordenadas ('A1','D7','I9')",
+    "[I-A9-X] é o comando para INSERIR um número",
+    "[D-B7] é o comando para DELETAR um número",
+    " ^^  Ao selecionar essas ações acima você precisará inserir as coordenadas ('A1','D7','I9')",
     "[V] Verificar solução",
-    "[R] Restart"
+    "[M] Exibe o menu de ações"
 ]).
 
 menu_lines([
@@ -70,9 +73,20 @@ menu_lines([
     "[Q] Sair",
     "Qualquer outra tecla inicia o jogo"]).
 
-color_tutorial_line(Line, Colored) :-
+color_menu_line(Line, Colored) :-
     ( sub_string(Line, 0, 4, _, Prefix),
       sub_string(Line, 4, _, 0, Rest)
+    ->
+        color_text(Prefix, yellow, ColoredPrefix),
+        color_text(Rest, green, ColoredRest),
+        format(string(Colored), "~w~w", [ColoredPrefix, ColoredRest])
+    ;
+        color_text(Line, green, Colored)
+    ).
+
+color_tutorial_line(Line, Colored) :-
+    ( sub_string(Line, 0, 5, _, Prefix),
+      sub_string(Line, 5, _, 0, Rest)
     ->
         color_text(Prefix, yellow, ColoredPrefix),
         color_text(Rest, green, ColoredRest),
