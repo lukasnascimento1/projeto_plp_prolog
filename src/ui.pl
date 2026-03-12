@@ -8,6 +8,7 @@ Interface de usuário para o jogo Sudoku.
 :- use_module(generator).
 :- use_module(util).
 :- use_module(parser).
+:- use_module(validation).
 
 
 /* =========================
@@ -164,7 +165,7 @@ game_loop(Board, Fixed) :-
     ).
 
 check_board(Board) :-
-    ( sudoku_correct(Board)
+    ( validation:is_solution_valid(Board)
         -> print_color("Parabéns! O Sudoku está correto!", green)
         ;  print_color("O tabuleiro ainda possui erros.", red)
     ).
